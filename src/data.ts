@@ -6,9 +6,11 @@ export type VerbItem = {
   verb: string;
   ru: string;
   example: string;
-  mediaDataUri: string;
+  mediaDataUri: string; // позже заменим на фото
   distractors: string[];
 };
+
+type Bilingual = { ru: string; en: string };
 
 function svgData(svg: string) {
   const encoded = encodeURIComponent(svg)
@@ -17,7 +19,10 @@ function svgData(svg: string) {
   return `data:image/svg+xml;charset=UTF-8,${encoded}`;
 }
 
-function sceneSvg(title: string, hint: string) {
+/**
+ * Нейтральная “сцена” без текста (чтобы язык интерфейса не ломался).
+ */
+function sceneSvg(): string {
   const svg = `
   <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
     <defs>
@@ -41,40 +46,45 @@ function sceneSvg(title: string, hint: string) {
     <path d="M290 360c30 28 65 42 106 42s76-14 106-42" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="18" stroke-linecap="round"/>
     <path d="M270 230c20-40 50-60 82-60s62 20 82 60" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="18" stroke-linecap="round"/>
 
-    <text x="682" y="170" font-size="44" font-family="ui-sans-serif, system-ui" fill="rgba(0,0,0,0.78)" font-weight="800">${title}</text>
-    <text x="682" y="212" font-size="22" font-family="ui-sans-serif, system-ui" fill="rgba(0,0,0,0.68)">${hint}</text>
+    <path d="M700 160h350" stroke="rgba(0,0,0,0.45)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M700 200h240" stroke="rgba(0,0,0,0.35)" stroke-width="10" stroke-linecap="round"/>
 
-    <text x="686" y="352" font-size="26" font-family="ui-sans-serif, system-ui" fill="rgba(255,255,255,0.85)" font-weight="700">Выберите глагол</text>
-    <text x="686" y="392" font-size="18" font-family="ui-sans-serif, system-ui" fill="rgba(255,255,255,0.65)">Подсказка: смотрите на сцену слева</text>
+    <path d="M700 360h320" stroke="rgba(255,255,255,0.35)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M700 400h280" stroke="rgba(255,255,255,0.25)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M700 440h300" stroke="rgba(255,255,255,0.20)" stroke-width="10" stroke-linecap="round"/>
   </svg>`;
   return svgData(svg);
 }
 
-export const TOPICS: { id: TopicId; title: string; subtitle: string }[] = [
-  { id: "home", title: "Дом", subtitle: "рутина, быт, кухня" },
-  { id: "transport", title: "Транспорт", subtitle: "поездки, метро, поезд" },
-  { id: "office", title: "Офис", subtitle: "встречи, планы, звонки" },
-  { id: "shopping", title: "Покупки", subtitle: "магазин, оплата, поиск" },
+export const TOPICS: { id: TopicId; title: Bilingual; subtitle: Bilingual }[] = [
+  { id: "home", title: { ru: "Дом", en: "Home" }, subtitle: { ru: "рутина, быт, кухня", en: "routine, chores, kitchen" } },
+  { id: "transport", title: { ru: "Транспорт", en: "Transport" }, subtitle: { ru: "поездки, метро, поезд", en: "trips, metro, trains" } },
+  { id: "office", title: { ru: "Офис", en: "Office" }, subtitle: { ru: "встречи, планы, звонки", en: "meetings, plans, calls" } },
+  { id: "shopping", title: { ru: "Покупки", en: "Shopping" }, subtitle: { ru: "магазин, оплата, поиск", en: "store, payment, searching" } },
 ];
 
 export const VERBS: VerbItem[] = [
-  { id: "aufstehen", topic: "home", verb: "aufstehen", ru: "вставать", example: "Ich stehe um 7 Uhr auf.", mediaDataUri: sceneSvg("Утро", "человек встаёт с кровати"), distractors: ["schlafen", "kochen", "aufräumen", "öffnen"] },
-  { id: "schlafen", topic: "home", verb: "schlafen", ru: "спать", example: "Ich schlafe acht Stunden.", mediaDataUri: sceneSvg("Ночь", "человек спит"), distractors: ["aufstehen", "kochen", "laufen", "bezahlen"] },
-  { id: "kochen", topic: "home", verb: "kochen", ru: "готовить", example: "Ich koche Pasta.", mediaDataUri: sceneSvg("Кухня", "готовка еды"), distractors: ["kaufen", "fahren", "aufräumen", "schreiben"] },
-  { id: "aufräumen", topic: "home", verb: "aufräumen", ru: "убираться", example: "Ich räume das Zimmer auf.", mediaDataUri: sceneSvg("Комната", "наводить порядок"), distractors: ["kochen", "schlafen", "fahren", "suchen"] },
+  // HOME
+  { id: "aufstehen", topic: "home", verb: "aufstehen", ru: "вставать", example: "Ich stehe um 7 Uhr auf.", mediaDataUri: sceneSvg(), distractors: ["schlafen", "kochen", "aufräumen", "öffnen"] },
+  { id: "schlafen", topic: "home", verb: "schlafen", ru: "спать", example: "Ich schlafe acht Stunden.", mediaDataUri: sceneSvg(), distractors: ["aufstehen", "kochen", "laufen", "bezahlen"] },
+  { id: "kochen", topic: "home", verb: "kochen", ru: "готовить", example: "Ich koche Pasta.", mediaDataUri: sceneSvg(), distractors: ["kaufen", "fahren", "aufräumen", "schreiben"] },
+  { id: "aufräumen", topic: "home", verb: "aufräumen", ru: "убираться", example: "Ich räume das Zimmer auf.", mediaDataUri: sceneSvg(), distractors: ["kochen", "schlafen", "fahren", "suchen"] },
 
-  { id: "fahren", topic: "transport", verb: "fahren", ru: "ехать", example: "Wir fahren nach Berlin.", mediaDataUri: sceneSvg("Поездка", "движение транспортом"), distractors: ["gehen", "bezahlen", "öffnen", "planen"] },
-  { id: "einsteigen", topic: "transport", verb: "einsteigen", ru: "садиться (в транспорт)", example: "Ich steige in den Bus ein.", mediaDataUri: sceneSvg("Остановка", "вход в автобус/поезд"), distractors: ["aussteigen", "fahren", "laufen", "kaufen"] },
-  { id: "aussteigen", topic: "transport", verb: "aussteigen", ru: "выходить (из транспорта)", example: "Wir steigen an der nächsten Station aus.", mediaDataUri: sceneSvg("Станция", "выход из метро/поезда"), distractors: ["einsteigen", "fahren", "öffnen", "suchen"] },
-  { id: "laufen", topic: "transport", verb: "laufen", ru: "бежать/идти (быстро)", example: "Ich laufe zum Zug.", mediaDataUri: sceneSvg("Спешка", "человек бежит"), distractors: ["fahren", "schlafen", "planen", "bezahlen"] },
+  // TRANSPORT
+  { id: "fahren", topic: "transport", verb: "fahren", ru: "ехать", example: "Wir fahren nach Berlin.", mediaDataUri: sceneSvg(), distractors: ["gehen", "bezahlen", "öffnen", "planen"] },
+  { id: "einsteigen", topic: "transport", verb: "einsteigen", ru: "садиться (в транспорт)", example: "Ich steige in den Bus ein.", mediaDataUri: sceneSvg(), distractors: ["aussteigen", "fahren", "laufen", "kaufen"] },
+  { id: "aussteigen", topic: "transport", verb: "aussteigen", ru: "выходить (из транспорта)", example: "Wir steigen an der nächsten Station aus.", mediaDataUri: sceneSvg(), distractors: ["einsteigen", "fahren", "öffnen", "suchen"] },
+  { id: "laufen", topic: "transport", verb: "laufen", ru: "бежать/идти (быстро)", example: "Ich laufe zum Zug.", mediaDataUri: sceneSvg(), distractors: ["fahren", "schlafen", "planen", "bezahlen"] },
 
-  { id: "planen", topic: "office", verb: "planen", ru: "планировать", example: "Wir planen das Projekt.", mediaDataUri: sceneSvg("Встреча", "план проекта"), distractors: ["bezahlen", "kochen", "einsteigen", "aufräumen"] },
-  { id: "sprechen", topic: "office", verb: "sprechen", ru: "говорить", example: "Ich spreche mit dem Kunden.", mediaDataUri: sceneSvg("Разговор", "обсуждение"), distractors: ["schreiben", "öffnen", "kaufen", "fahren"] },
-  { id: "schreiben", topic: "office", verb: "schreiben", ru: "писать", example: "Ich schreibe eine E-Mail.", mediaDataUri: sceneSvg("Письмо", "написание сообщения"), distractors: ["sprechen", "planen", "laufen", "bezahlen"] },
-  { id: "unterschreiben", topic: "office", verb: "unterschreiben", ru: "подписывать", example: "Bitte unterschreiben Sie hier.", mediaDataUri: sceneSvg("Документ", "подпись"), distractors: ["öffnen", "planen", "kaufen", "aussteigen"] },
+  // OFFICE
+  { id: "planen", topic: "office", verb: "planen", ru: "планировать", example: "Wir planen das Projekt.", mediaDataUri: sceneSvg(), distractors: ["bezahlen", "kochen", "einsteigen", "aufräumen"] },
+  { id: "sprechen", topic: "office", verb: "sprechen", ru: "говорить", example: "Ich spreche mit dem Kunden.", mediaDataUri: sceneSvg(), distractors: ["schreiben", "öffnen", "kaufen", "fahren"] },
+  { id: "schreiben", topic: "office", verb: "schreiben", ru: "писать", example: "Ich schreibe eine E-Mail.", mediaDataUri: sceneSvg(), distractors: ["sprechen", "planen", "laufen", "bezahlen"] },
+  { id: "unterschreiben", topic: "office", verb: "unterschreiben", ru: "подписывать", example: "Bitte unterschreiben Sie hier.", mediaDataUri: sceneSvg(), distractors: ["öffnen", "planen", "kaufen", "aussteigen"] },
 
-  { id: "kaufen", topic: "shopping", verb: "kaufen", ru: "покупать", example: "Ich kaufe Brot.", mediaDataUri: sceneSvg("Магазин", "выбор товара"), distractors: ["bezahlen", "suchen", "öffnen", "kochen"] },
-  { id: "bezahlen", topic: "shopping", verb: "bezahlen", ru: "платить", example: "Ich bezahle mit Karte.", mediaDataUri: sceneSvg("Касса", "оплата"), distractors: ["kaufen", "suchen", "fahren", "schlafen"] },
-  { id: "suchen", topic: "shopping", verb: "suchen", ru: "искать", example: "Ich suche Milch.", mediaDataUri: sceneSvg("Поиск", "поиск товара на полке"), distractors: ["kaufen", "bezahlen", "öffnen", "planen"] },
-  { id: "öffnen", topic: "shopping", verb: "öffnen", ru: "открывать", example: "Ich öffne die Tür.", mediaDataUri: sceneSvg("Дверь", "открыть дверь/упаковку"), distractors: ["schreiben", "laufen", "kaufen", "aufräumen"] },
+  // SHOPPING
+  { id: "kaufen", topic: "shopping", verb: "kaufen", ru: "покупать", example: "Ich kaufe Brot.", mediaDataUri: sceneSvg(), distractors: ["bezahlen", "suchen", "öffnen", "kochen"] },
+  { id: "bezahlen", topic: "shopping", verb: "bezahlen", ru: "платить", example: "Ich bezahle mit Karte.", mediaDataUri: sceneSvg(), distractors: ["kaufen", "suchen", "fahren", "schlafen"] },
+  { id: "suchen", topic: "shopping", verb: "suchen", ru: "искать", example: "Ich suche Milch.", mediaDataUri: sceneSvg(), distractors: ["kaufen", "bezahlen", "öffnen", "planen"] },
+  { id: "öffnen", topic: "shopping", verb: "öffnen", ru: "открывать", example: "Ich öffne die Tür.", mediaDataUri: sceneSvg(), distractors: ["schreiben", "laufen", "kaufen", "aufräumen"] },
 ];

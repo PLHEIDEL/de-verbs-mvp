@@ -4,6 +4,8 @@ import type { TopicId, VerbItem } from "./data";
 import { loadProgress, saveProgress, resetProgress, applyResult } from "./storage";
 import { makeOptions, pickQueue } from "./quiz";
 import type { Mode } from "./quiz";
+import { loadLang, saveLang, t } from "./i18n";
+import type { UiLang } from "./i18n";
 
 type Screen = "home" | "session";
 type SessionStats = { correct: number; wrong: number };
@@ -12,6 +14,8 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("home");
   const [topic, setTopic] = useState<TopicId>("home");
   const [mode, setMode] = useState<Mode>("learn");
+
+  const [uiLang, setUiLang] = useState<UiLang>(() => loadLang());
 
   const [progress, setProgress] = useState(() => loadProgress());
 
@@ -29,6 +33,11 @@ export default function App() {
   useEffect(() => {
     saveProgress(progress);
   }, [progress]);
+
+  function switchLang(next: UiLang) {
+    setUiLang(next);
+    saveLang(next);
+  }
 
   function startSession(nextMode: Mode) {
     const p = loadProgress();
@@ -89,17 +98,14 @@ export default function App() {
 
   const totals = useMemo(() => {
     let seen = 0,
-      due = 0,
       errors = 0;
-    const now = Date.now();
     for (const v of itemsForTopic) {
       const p = progress[v.id];
       if (!p) continue;
       if (p.correct + p.wrong > 0) seen++;
-      if (p.nextDue <= now) due++;
       if (p.wrong > 0 && p.streak === 0) errors++;
     }
-    return { total: itemsForTopic.length, seen, due, errors };
+    return { total: itemsForTopic.length, seen, errors };
   }, [itemsForTopic, progress]);
 
   return (
@@ -108,15 +114,19 @@ export default function App() {
         <div className="brand">
           <div className="logo" />
           <div>
-            <div className="title">Deutsch Verben — MVP</div>
-            <div className="subtitle">картинка → выберите правильный глагол</div>
+            <div className="title">{t(uiLang, "appTitle")}</div>
+            <div className="subtitle">{t(uiLang, "appSubtitle")}</div>
           </div>
         </div>
 
         <div className="pillRow">
-          <div className="pill">Прогресс: localStorage</div>
-          <button className="btn" onClick={clearAll} title="Сбросить прогресс">
-            Сброс
+          <button className="btn" onClick={() => switchLang("ru")}>RU</button>
+          <button className="btn" onClick={() => switchLang("en")}>EN</button>
+
+          <div className="pill">localStorage</div>
+
+          <button className="btn" onClick={clearAll} title={t(uiLang, "reset")}>
+            {t(uiLang, "reset")}
           </button>
         </div>
       </div>
@@ -124,20 +134,20 @@ export default function App() {
       {screen === "home" && (
         <div className="grid">
           <div className="card">
-            <div className="h1">Выберите тему</div>
-            <div className="muted">Дальше выберите режим: Учить или Повтор ошибок</div>
+            <div className="h1">{t(uiLang, "chooseTopic")}</div>
+            <div className="muted">{t(uiLang, "chooseMode")}</div>
 
             <div className="hr" />
 
             <div className="grid grid2">
-              {TOPICS.map((t) => (
+              {TOPICS.map((tp) => (
                 <button
-                  key={t.id}
-                  className={"btn" + (t.id === topic ? " btnPrimary" : "")}
-                  onClick={() => setTopic(t.id)}
+                  key={tp.id}
+                  className={"btn" + (tp.id === topic ? " btnPrimary" : "")}
+                  onClick={() => setTopic(tp.id)}
                 >
-                  <div style={{ fontWeight: 800, fontSize: 16 }}>{t.title}</div>
-                  <div className="small">{t.subtitle}</div>
+                  <div style={{ fontWeight: 800, fontSize: 16 }}>{tp.title[uiLang]}</div>
+                  <div className="small">{tp.subtitle[uiLang]}</div>
                 </button>
               ))}
             </div>
@@ -146,15 +156,15 @@ export default function App() {
 
             <div className="kpi">
               <div className="kpiBox">
-                <div className="kpiLabel">Всего глаголов</div>
+                <div className="kpiLabel">{t(uiLang, "totalVerbs")}</div>
                 <div className="kpiValue">{totals.total}</div>
               </div>
               <div className="kpiBox">
-                <div className="kpiLabel">Уже встречались</div>
+                <div className="kpiLabel">{t(uiLang, "seen")}</div>
                 <div className="kpiValue">{totals.seen}</div>
               </div>
               <div className="kpiBox">
-                <div className="kpiLabel">Ошибки к повтору</div>
+                <div className="kpiLabel">{t(uiLang, "errors")}</div>
                 <div className="kpiValue">{totals.errors}</div>
               </div>
             </div>
@@ -163,15 +173,11 @@ export default function App() {
 
             <div className="footerActions">
               <button className="btn btnPrimary" onClick={() => startSession("learn")}>
-                Учить (новые + повтор)
+                {t(uiLang, "learn")}
               </button>
               <button className="btn" onClick={() => startSession("review")}>
-                Повтор ошибок
+                {t(uiLang, "review")}
               </button>
-            </div>
-
-            <div className="small" style={{ marginTop: 10 }}>
-              Позже можно заменить SVG на реальные картинки/видео, не меняя логику.
             </div>
           </div>
         </div>
@@ -183,17 +189,18 @@ export default function App() {
             <div className="rowBetween">
               <div>
                 <div className="h1">
-                  {TOPICS.find((t) => t.id === topic)?.title} — {mode === "learn" ? "Учить" : "Повтор"}
+                  {TOPICS.find((x) => x.id === topic)?.title[uiLang]} —{" "}
+                  {mode === "learn" ? t(uiLang, "modeLearn") : t(uiLang, "modeReview")}
                 </div>
                 <div className="muted">
-                  Вопрос {queue.length ? idx + 1 : 0}/{queue.length} · Правильно: {stats.correct} · Ошибок:{" "}
-                  {stats.wrong}
+                  {t(uiLang, "question")} {queue.length ? idx + 1 : 0}/{queue.length} ·{" "}
+                  {t(uiLang, "correct")}: {stats.correct} · {t(uiLang, "mistakes")}: {stats.wrong}
                 </div>
               </div>
 
               <div className="pillRow">
                 <button className="btn" onClick={endSession}>
-                  На главную
+                  {t(uiLang, "backHome")}
                 </button>
               </div>
             </div>
@@ -201,7 +208,7 @@ export default function App() {
             <div className="hr" />
 
             {!current ? (
-              <div className="muted">Нет элементов для сессии (попробуйте другой режим или тему).</div>
+              <div className="muted">{t(uiLang, "noItems")}</div>
             ) : (
               <>
                 <div className="mediaBox">
@@ -223,7 +230,7 @@ export default function App() {
                     return (
                       <button key={opt} className={cls} onClick={() => answer(opt)} disabled={locked}>
                         <div style={{ fontSize: 18, fontWeight: 900 }}>{opt}</div>
-                        <div className="small">{locked && isCorrect ? "✔ правильный" : "\u00A0"}</div>
+                        <div className="small">{locked && isCorrect ? "✔" : "\u00A0"}</div>
                       </button>
                     );
                   })}
@@ -233,7 +240,7 @@ export default function App() {
 
                 <div className="rowBetween">
                   <div>
-                    <div className="h2">Подсказка (после ответа)</div>
+                    <div className="h2">{t(uiLang, "hintAfter")}</div>
                     <div className="muted">
                       {picked ? (
                         <>
@@ -243,13 +250,13 @@ export default function App() {
                           <div className="small">{current.example}</div>
                         </>
                       ) : (
-                        "Выберите вариант"
+                        t(uiLang, "chooseAnswer")
                       )}
                     </div>
                   </div>
 
                   <div className="pillRow">
-                    <div className="pill">SRS: 1д→3д→7д→14д→30д</div>
+                    <div className="pill">{t(uiLang, "srs")}</div>
                   </div>
                 </div>
 
@@ -257,7 +264,7 @@ export default function App() {
                   <>
                     <div className="hr" />
                     <button className="btn btnPrimary" onClick={endSession}>
-                      Завершить сессию
+                      {t(uiLang, "finish")}
                     </button>
                   </>
                 )}
